@@ -4,42 +4,45 @@ import type { PageParams } from "@/types/next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Papa from "papaparse";
-import { useEffect, useState } from "react";
-import { Album } from "@prisma/client";
-import useSWR, { Fetcher } from "swr";
-import { Manifest } from "@/types/gallica";
+import { Album, Image } from "@prisma/client";
+import {
+  insertAlbumIntoDB,
+  insertImageIntoDB,
+  getManifest,
+} from "@/lib/insertDB";
+import { Canva } from "@/types/gallica";
 
 export default function NbImagesPage(props: PageParams<{}>) {
-  const fetcher: Fetcher<Manifest, string> = (...args) => fetch(...args).then((res) => res.json())
-
-  const { data, error } = useSWR<Manifest, Error>('/api/bnf?ark=ark:/12148/btv1b77023022&type=manifest', fetcher)
-
-  if (error) return <div>Failed to load</div>
-  if (!data) return <div>Loading...</div>
-  console.log(data);
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const csvFile: File | undefined = event.target.files?.[0];
-    let csvToArray: null | Album[] = null;
-    const multipleView = /(\d{2,3})\s+\w*phot\w*/g;
 
     Papa.parse(csvFile as File, {
       header: true,
-      // dynamicTyping: true,
+      dynamicTyping: true,
       skipEmptyLines: true,
-      complete: (result) => {
-        csvToArray = (result.data as Album[]).map((row) => {
-          const resultMatch : null | string[] = row.title.match(multipleView);
-          if(resultMatch) {
-            return {
-              ...row, 
-              imageNb: resultMatch[0].replace(/\D/g, "")
+      complete: (result: { data: Album[] }) => {
+        result.data.map(async (row: Album) => {
+          const newAlbum = await insertAlbumIntoDB({
+            ...row,
+            ark: row.ark.slice(23), // remove https://gallica.fr
+            date: row.date.toString(),
+          });
+          const manifest = await getManifest(newAlbum.ark);
+          const imageNb = manifest?.data.sequences[0].canvases.length;
+          for (let i = 1; i <= (imageNb as number); i++) {
+            const image: Canva | undefined =
+              manifest?.data.sequences[0].canvases[i];
+            if (image) {
+              await insertImageIntoDB({
+                view: `f${i}`,
+                height: image.height,
+                width: image.width,
+                valid: false,
+                albumId: newAlbum.id,
+              });
             }
-          } else {
-            return row;
           }
-        })
-        console.log(csvToArray);
+        });
       },
       error: (error) => {
         console.error(error);
