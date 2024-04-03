@@ -5,8 +5,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = params.id;
-    const image = await prisma.image.findFirst({ where: { id } });
+    const id = parseInt(params.id, 10);
+    const image = await prisma.image.findFirst({ where: { id: id } });
     if (image === null) {
       return new Response("Aucun image n'a été trouvé", { status: 404 });
     } else {
@@ -22,7 +22,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = params.id;
+    const id = parseInt(params.id, 10);
     const body = await request.json();
 
     const image = await prisma.image.findFirst({ where: { id } });
@@ -43,7 +43,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = params.id;
+    const id = parseInt(params.id, 10);
 
     await prisma.image.delete({ where: { id } });
     return new Response(null, { status: 204 });

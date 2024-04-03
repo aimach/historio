@@ -2,11 +2,11 @@ import prisma from "../../../lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { ark: string } }
 ) {
   try {
-    const id = params.id;
-    const album = await prisma.album.findFirst({ where: { id } });
+    const ark = params.ark;
+    const album = await prisma.album.findFirst({ where: { ark } });
     if (album === null) {
       return new Response("Aucun album n'a été trouvé", { status: 404 });
     } else {
@@ -19,17 +19,17 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { ark: string } }
 ) {
   try {
-    const id = params.id;
+    const ark = params.ark;
     const body = await request.json();
 
-    const album = await prisma.album.findFirst({ where: { id } });
+    const album = await prisma.album.findFirst({ where: { ark } });
     if (album === null) {
       return new Response("Aucun album n'a été trouvé", { status: 404 });
     } else {
-      await prisma.album.update({ data: body, where: { id } });
+      await prisma.album.update({ data: body, where: { ark } });
     }
 
     return new Response(null, { status: 204 });
@@ -40,12 +40,12 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { ark: string } }
 ) {
   try {
-    const id = params.id;
+    const ark = params.ark;
 
-    await prisma.album.delete({ where: { id } });
+    await prisma.album.delete({ where: { ark } });
     return new Response(null, { status: 204 });
   } catch (error) {
     throw new Error(error as string);

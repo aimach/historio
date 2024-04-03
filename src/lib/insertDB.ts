@@ -34,9 +34,7 @@ export const insertImageIntoDB = async (image: Omit<Image, "id">) => {
     },
     body: JSON.stringify(image),
   });
-  if (response.ok) {
-    console.log("Image inserted");
-  } else {
+  if (!response.ok) {
     console.error("Error inserting image");
   }
 };

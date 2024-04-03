@@ -6,7 +6,18 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const album = await prisma.album.create({ data: body });
+  const { ark, title, author, date, origin, completed, countryId } =
+    await request.json();
+  const album = await prisma.album.create({
+    data: {
+      ark: ark,
+      title: title,
+      author: author,
+      date: date,
+      origin: origin,
+      completed: completed,
+      Country: { connect: { name: countryId } },
+    },
+  });
   return new Response(JSON.stringify(album), { status: 201 });
 }

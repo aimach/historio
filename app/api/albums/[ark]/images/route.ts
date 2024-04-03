@@ -2,12 +2,12 @@ import prisma from "../../../../lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { ark: string } }
 ) {
   try {
-    const id = params.id;
+    const ark = params.ark;
     const album = await prisma.album.findFirst({
-      where: { id },
+      where: { ark },
       include: { images: true },
     });
     if (album === null) {

@@ -4,7 +4,7 @@ import type { PageParams } from "@/types/next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Papa from "papaparse";
-import { Album, Image } from "@prisma/client";
+import { Album } from "@prisma/client";
 import {
   insertAlbumIntoDB,
   insertImageIntoDB,
@@ -24,21 +24,23 @@ export default function NbImagesPage(props: PageParams<{}>) {
         result.data.map(async (row: Album) => {
           const newAlbum = await insertAlbumIntoDB({
             ...row,
-            ark: row.ark.slice(23), // remove https://gallica.fr
+            ark: row.ark.slice(23), // remove "https://gallica.fr"
             date: row.date.toString(),
           });
           const manifest = await getManifest(newAlbum.ark);
           const imageNb = manifest?.data.sequences[0].canvases.length;
-          for (let i = 1; i <= (imageNb as number); i++) {
+          for (let i = 0; i < (imageNb as number); i++) {
             const image: Canva | undefined =
               manifest?.data.sequences[0].canvases[i];
             if (image) {
               await insertImageIntoDB({
-                view: `f${i}`,
+                folio: `f${i + 1}`,
                 height: image.height,
                 width: image.width,
                 valid: false,
-                albumId: newAlbum.id,
+                view: image.images[0].resource["@id"],
+                thumbnail: image.thumbnail["@id"],
+                albumId: newAlbum.ark,
               });
             }
           }

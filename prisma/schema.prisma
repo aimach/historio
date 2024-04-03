@@ -14,40 +14,39 @@ datasource db {
 }
 
 model Area {
-  id    String  @id @default(uuid())
-  name  String
+  name  String @id
   countries Country[]
 }
 
 model Country {
-  id        String  @id @default(uuid())
-  name      String
-  areaId   String
-  Area      Area    @relation(fields: [areaId], references: [id])
+  name      String @id
+  areaId    String
+  Area      Area    @relation(fields: [areaId], references: [name])
   albums    Album[]
 }
 
 model Album {
-  id          String  @id @default(uuid())
-  ark         String
+  ark         String @id
   title       String
   author      String?
   date        String
   origin      String
   completed   Boolean @default(false)
   countryId  String
-  Country     Country @relation(fields: [countryId], references: [id])
+  Country     Country @relation(fields: [countryId], references: [name])
   images      Image[]
 }
 
 model Image {
-  id         String  @id @default(uuid())
-  view       String
+  id         Int  @id @default(autoincrement())
+  folio      String
   height     Int
   width      Int
   valid      Boolean
-  albumId   String
-  Album      Album   @relation(fields: [albumId], references: [id])
+  view       String
+  thumbnail  String
+  albumId    String
+  Album      Album   @relation(fields: [albumId], references: [ark])
 }
 
 // authentification authjs

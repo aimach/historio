@@ -25,7 +25,7 @@ async function createCountries(name: string, countries: string[]) {
               name: country,
               Area: {
                 connect: {
-                  id: area.id,
+                  name: area.name,
                 },
               },
             },
