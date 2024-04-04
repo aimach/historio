@@ -2,6 +2,7 @@ import { Manifest } from "@/types/gallica";
 import { Album, Image } from "@prisma/client";
 import Papa from "papaparse";
 import { readCSVFileAsString } from "./utils";
+import { Canva } from "@/types/gallica";
 
 export const getManifest = async (ark: string) => {
   const response = await fetch(`/api/bnf?ark=${ark}&type=manifest`);
@@ -46,7 +47,7 @@ export const formatCSV = async (file: File, country: string) => {
   let modifiedCSV: string = "";
   Papa.parse(csvString, {
     header: true,
-    skipEmptyLines: false,
+    skipEmptyLines: true,
     delimiter: ";",
 
     complete: (result) => {
@@ -73,4 +74,42 @@ export const formatCSV = async (file: File, country: string) => {
     },
   });
   return modifiedCSV;
+};
+
+export const addFormatedCSVTODB = async (csvFile: File | string) => {
+  Papa.parse(csvFile, {
+    header: true,
+    dynamicTyping: true,
+    skipEmptyLines: true,
+    complete: (result) => addAlbumsAndImages(result as { data: Album[] }),
+    error: (error) => {
+      console.error(error);
+    },
+  });
+};
+
+export const addAlbumsAndImages = (result: { data: Album[] }) => {
+  result.data.map(async (row: Album) => {
+    const newAlbum = await insertAlbumIntoDB({
+      ...row,
+      ark: row.ark.slice(23), // remove "https://gallica.fr"
+      date: row.date.toString(),
+    });
+    const manifest = await getManifest(newAlbum.ark);
+    const imageNb = manifest?.data.sequences[0].canvases.length;
+    for (let i = 0; i < (imageNb as number); i++) {
+      const image: Canva | undefined = manifest?.data.sequences[0].canvases[i];
+      if (image) {
+        await insertImageIntoDB({
+          folio: `f${i + 1}`,
+          height: image.height,
+          width: image.width,
+          valid: false,
+          view: image.images[0].resource["@id"],
+          thumbnail: image.thumbnail["@id"],
+          albumId: newAlbum.ark,
+        });
+      }
+    }
+  });
 };

@@ -12,15 +12,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+
 import { Country } from "@prisma/client";
 import useSWR, { Fetcher } from "swr";
 import Link from "next/link";
 
-import { formatCSV } from "@/lib/insertDB";
+import { addFormatedCSVTODB, formatCSV } from "@/lib/insertDB";
 
 export type FormatCSVInputProps = {};
 
 const FormatCSVInput = (props: FormatCSVInputProps) => {
+  const { toast } = useToast();
   const [countries, setCountries] = useState<Country[]>([]);
   const [selectCountry, setSelectCountry] = useState<string | undefined>();
   const [file, setFile] = useState<File | undefined>();
@@ -49,58 +59,82 @@ const FormatCSVInput = (props: FormatCSVInputProps) => {
     setFileURL(fileToDownload);
   };
 
+  const handleDownloadButton = async () => {
+    await addFormatedCSVTODB(fileURL as string);
+    setSelectCountry(undefined);
+    setFile(undefined);
+    setFileURL(undefined);
+    toast({
+      title: "Données importées !",
+      description:
+        "Les données ont bien été importées dans la base de données.",
+    });
+  };
+
   return (
-    <div className="grid items-center gap-5 w-1/2">
-      <h3 className="text-xl font-bold">Formater l&apos;export de Gallica</h3>
-      <div>
-        <Label htmlFor="csvFile">Ajouter un fichier CSV</Label>
-        <Input
-          id="csvFile"
-          type="file"
-          onChange={handleFileChange}
-          accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-        />
-        <Label htmlFor="csvFile">Choisir le pays</Label>
-        <Select onValueChange={(value) => handleCountryChange(value)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sélectionner un pays" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {countries.map((country) => (
-                <SelectItem value={country.name} key={country.name}>
-                  {country.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-      {selectCountry && (
-        <div>
-          <Button
-            onClick={() => handleFormatButton(file as File, selectCountry)}
-          >
-            Formater
-          </Button>
-        </div>
-      )}
-      {fileURL && (
-        <div>
-          <Button asChild>
-            <Link
-              href={`data:text/csv;charset=utf-8,${encodeURIComponent(
-                fileURL
-              )}`}
-              download="data.csv"
-            >
-              Télécharger le fichier formaté
-            </Link>
-          </Button>
-          <Button>Importer dans la base de données</Button>
-        </div>
-      )}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Formater l&apos;export de Gallica</CardTitle>
+        <CardDescription>
+          Formater le fichier CSV envoyé par Gallica, puis le télécharger ou
+          l&apos;importer directement dans la base de données.
+        </CardDescription>
+        <CardContent className="p-0">
+          <div className="mt-5 mb-5 flex flex-col gap-5">
+            <Label htmlFor="csvFile">Ajouter un fichier CSV</Label>
+            <Input
+              id="csvFile"
+              type="file"
+              onChange={handleFileChange}
+              accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+            />
+          </div>
+          <div className="mt-5 mb-5 flex flex-col gap-5">
+            <Label htmlFor="csvFile">Choisir le pays</Label>
+            <Select onValueChange={(value) => handleCountryChange(value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sélectionner un pays" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {countries.map((country) => (
+                    <SelectItem value={country.name} key={country.name}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          {file && selectCountry && (
+            <div className="flex justify-end">
+              <Button
+                onClick={() => handleFormatButton(file as File, selectCountry)}
+              >
+                Formater
+              </Button>
+            </div>
+          )}
+          {fileURL && (
+            <div className="flex flex-col gap-5 w-1/2 m-auto">
+              <Button asChild>
+                <Link
+                  href={`data:text/csv;charset=utf-8,${encodeURIComponent(
+                    fileURL
+                  )}`}
+                  download="data.csv"
+                >
+                  Télécharger le fichier formaté
+                </Link>
+              </Button>
+              <Button onClick={handleDownloadButton}>
+                Importer dans la base de données
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </CardHeader>
+    </Card>
   );
 };
 
