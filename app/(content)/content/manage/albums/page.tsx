@@ -16,10 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Album, Country } from "@prisma/client";
 import { getAlbums, getCountries } from "@/lib/fetchData";
 import { Check, Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { set } from "zod";
 
 export type DisplayTableProps = {
   page: number;
@@ -29,8 +31,10 @@ export type DisplayTableProps = {
 
 const DisplayTableAlbums = (props: DisplayTableProps) => {
   const { page, itemNb, setItemNb } = props;
-  const [albums, setAlbums] = useState<Album[] | []>([]);
+  const [albums, setAlbums] = useState<Album[] | null>(null);
   const [countries, setCountries] = useState<Country[] | []>([]);
+  const [selectedVerified, setSelectedVerified] = useState<string>("");
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
   const headers: string[] = [
     "Ark",
     "Titre",
@@ -42,17 +46,24 @@ const DisplayTableAlbums = (props: DisplayTableProps) => {
 
   useEffect(() => {
     const getDatas = async () => {
-      setAlbums(await getAlbums(page, itemNb));
+      setAlbums(
+        await getAlbums(page, itemNb, selectedVerified, selectedCountry)
+      );
     };
     const getCountriesData = async () => {
       setCountries(await getCountries());
     };
     getDatas();
     getCountriesData();
-  }, [page, itemNb]);
+  }, [page, itemNb, selectedVerified, selectedCountry]);
 
-  if (albums.length === 0) {
-    return <Loader className="h-4 w-4 animate-spin" />;
+  const resetFilters = () => {
+    setSelectedVerified("");
+    setSelectedCountry("");
+  };
+
+  if (!albums) {
+    return <Loader className="h-4 w-4 animate-spin m-auto" />;
   }
 
   return (
@@ -74,7 +85,7 @@ const DisplayTableAlbums = (props: DisplayTableProps) => {
         </div>
         <div>
           <Label htmlFor="csvFile">Filtrer par pays</Label>
-          <Select onValueChange={(value) => console.log(value)}>
+          <Select onValueChange={(value) => setSelectedCountry(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Choisir le pays" />
             </SelectTrigger>
@@ -89,7 +100,7 @@ const DisplayTableAlbums = (props: DisplayTableProps) => {
         </div>
         <div>
           <Label htmlFor="csvFile">Filtrer par état</Label>
-          <Select onValueChange={(value) => console.log(value)}>
+          <Select onValueChange={(value) => setSelectedVerified(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Choisir l'état" />
             </SelectTrigger>
@@ -99,6 +110,7 @@ const DisplayTableAlbums = (props: DisplayTableProps) => {
             </SelectContent>
           </Select>
         </div>
+        <Button onClick={resetFilters}>Réinitialiser les filtres</Button>
       </div>
       <Table>
         <TableHeader>

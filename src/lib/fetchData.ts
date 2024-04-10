@@ -8,8 +8,16 @@ export const getCountries = async () => {
   }
 };
 
-export const getAlbums = async (page: number, number: number) => {
-  const response = await fetch(`/api/albums?page=${page}&number=${number}`);
+export const getAlbums = async (
+  page: number,
+  number: number,
+  verified?: string,
+  country?: string
+) => {
+  let url = `/api/albums?page=${page}&number=${number}`;
+  if (verified !== "") url += `&completed=${verified}`;
+  if (country !== "") url += `&country=${country}`;
+  const response = await fetch(url);
   if (response.ok) {
     const albums = await response.json();
     return albums;

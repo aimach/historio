@@ -22,7 +22,7 @@ export type DisplayTableImagesProps = {
 
 const DisplayTableImages = (props: DisplayTableImagesProps) => {
   const { page, itemNb } = props;
-  const [content, setContent] = useState<ImageType[] | []>([]);
+  const [content, setContent] = useState<ImageType[] | null>(null);
 
   useEffect(() => {
     const getDatas = async () => {
@@ -31,8 +31,12 @@ const DisplayTableImages = (props: DisplayTableImagesProps) => {
     getDatas();
   }, [page, itemNb]);
 
+  if (!content) {
+    return <Loader className="h-4 w-4 animate-spin m-auto" />;
+  }
+
   if (content.length === 0) {
-    return <Loader className="h-4 w-4 animate-spin" />;
+    return <div>Pas de résultat</div>;
   }
 
   const headers: string[] = [
