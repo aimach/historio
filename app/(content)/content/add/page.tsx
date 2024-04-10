@@ -1,5 +1,3 @@
-"use client";
-
 import type { PageParams } from "@/types/next";
 import FormatCSVInput from "@/features/content/FormatCSVInput";
 import AddContentInput from "@/features/content/AddContentInput";
