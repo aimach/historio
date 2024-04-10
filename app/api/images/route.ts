@@ -4,10 +4,12 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const page: string | null = searchParams.get("page");
   const number: string | null = searchParams.get("number");
+  const ark: string | null = searchParams.get("ark");
   const skip = (Number(page) - 1) * Number(number);
   const images = await prisma.image.findMany({
     skip,
     take: Number(number),
+    where: { Album: { ark: ark as string } },
   });
   return new Response(JSON.stringify(images), { status: 200 });
 }

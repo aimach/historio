@@ -21,16 +21,14 @@ import { Album, Country } from "@prisma/client";
 import { getAlbums, getCountries } from "@/lib/fetchData";
 import { Check, Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { set } from "zod";
+import Link from "next/link";
+import PaginationComponent from "@/features/pagination/Pagination";
 
-export type DisplayTableProps = {
-  page: number;
-  itemNb: number;
-  setItemNb: (value: number) => void;
-};
+export type DisplayTableProps = {};
 
 const DisplayTableAlbums = (props: DisplayTableProps) => {
-  const { page, itemNb, setItemNb } = props;
+  const [page, setPage] = useState<number>(1);
+  const [itemNb, setItemNb] = useState<number>(10);
   const [albums, setAlbums] = useState<Album[] | null>(null);
   const [countries, setCountries] = useState<Country[] | []>([]);
   const [selectedVerified, setSelectedVerified] = useState<string>("");
@@ -42,6 +40,7 @@ const DisplayTableAlbums = (props: DisplayTableProps) => {
     "Date(s)",
     "Pays",
     "Vérifié",
+    "Voir",
   ];
 
   useEffect(() => {
@@ -68,7 +67,6 @@ const DisplayTableAlbums = (props: DisplayTableProps) => {
 
   return (
     <div>
-      <h2>Albums</h2>
       <div className="flex gap-5">
         <div>
           <Label htmlFor="csvFile">Nombre de résultats</Label>
@@ -131,10 +129,16 @@ const DisplayTableAlbums = (props: DisplayTableProps) => {
               <TableCell>
                 {item.completed ? <Check color="green" /> : <X color="red" />}
               </TableCell>
+              <TableCell>
+                <Link href={`/content/manage/${encodeURIComponent(item.ark)}`}>
+                  Voir les images
+                </Link>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      <PaginationComponent page={page} setPage={setPage} />
     </div>
   );
 };

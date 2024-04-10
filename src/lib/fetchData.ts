@@ -26,8 +26,20 @@ export const getAlbums = async (
   }
 };
 
-export const getImages = async (page: number, number: number) => {
-  const response = await fetch(`/api/images?page=${page}&number=${number}`);
+export const getImages = async (page: number, number: number, ark: string) => {
+  const response = await fetch(
+    `/api/images?page=${page}&number=${number}&ark=${ark}`
+  );
+  if (response.ok) {
+    const images = await response.json();
+    return images;
+  } else {
+    console.error("Error fetching manifest");
+  }
+};
+
+export const getImagesNbPerAlbum = async (ark: string) => {
+  const response = await fetch(`/api/images/count?ark=${ark}`);
   if (response.ok) {
     const images = await response.json();
     return images;

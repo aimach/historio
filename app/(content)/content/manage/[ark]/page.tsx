@@ -8,28 +8,42 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Image as ImageType } from "@prisma/client";
-import { getImages } from "@/lib/fetchData";
+import { getImages, getImagesNbPerAlbum } from "@/lib/fetchData";
 import Image from "next/image";
 import { Check, Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import PaginationComponent from "@/features/pagination/Pagination";
 
-export type DisplayTableImagesProps = {
-  page: number;
-  itemNb: number;
-  setItemNb: (value: number) => void;
-};
+export type DisplayTableImagesProps = {};
 
 const DisplayTableImages = (props: DisplayTableImagesProps) => {
-  const { page, itemNb } = props;
+  const [page, setPage] = useState<number>(1);
+  const [itemNb, setItemNb] = useState<number>(10);
+  const [imagesPerAlbum, setImagesPerAlbum] = useState<number>(0);
+  const params = useParams<{ ark: string }>();
+  const ark: string = decodeURIComponent(params?.ark as string);
+
   const [content, setContent] = useState<ImageType[] | null>(null);
 
   useEffect(() => {
     const getDatas = async () => {
-      setContent(await getImages(page, itemNb));
+      setContent(await getImages(page, itemNb, ark));
+    };
+    const getImagesNb = async () => {
+      setImagesPerAlbum(await getImagesNbPerAlbum(ark));
     };
     getDatas();
-  }, [page, itemNb]);
+    getImagesNb();
+  }, [page, itemNb, ark]);
 
   if (!content) {
     return <Loader className="h-4 w-4 animate-spin m-auto" />;
@@ -44,12 +58,24 @@ const DisplayTableImages = (props: DisplayTableImagesProps) => {
     "Folio",
     "Dimensions",
     "Album",
-    "Vérifié",
+    "Sélectionné",
   ];
 
   return (
     <div>
-      <h2>Images</h2>
+      <div className="flex justify-between">
+        <p>{imagesPerAlbum} images</p>
+        <Select onValueChange={(value) => setItemNb(parseInt(value, 10))}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="10 résultats par page" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="10">10 résultats par page</SelectItem>
+            <SelectItem value="30">30 résultats par page</SelectItem>
+            <SelectItem value="50">50 résultats par page</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -81,6 +107,7 @@ const DisplayTableImages = (props: DisplayTableImagesProps) => {
           ))}
         </TableBody>
       </Table>
+      <PaginationComponent page={page} setPage={setPage} />
     </div>
   );
 };
