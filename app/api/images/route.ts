@@ -1,7 +1,14 @@
 import prisma from "../../lib/prisma";
 
 export async function GET(request: Request) {
-  const images = await prisma.image.findMany();
+  const { searchParams } = new URL(request.url);
+  const page: string | null = searchParams.get("page");
+  const number: string | null = searchParams.get("number");
+  const skip = (Number(page) - 1) * Number(number);
+  const images = await prisma.image.findMany({
+    skip,
+    take: Number(number),
+  });
   return new Response(JSON.stringify(images), { status: 200 });
 }
 
